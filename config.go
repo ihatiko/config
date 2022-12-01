@@ -1,21 +1,13 @@
 package config
 
 import (
-	"fmt"
 	cfg "github.com/ihatiko/viper-env"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	lg "log"
-	"os"
 )
 
-func GetConfig[T any]() (*T, error) {
-	config := localConfigPath
-	stand := os.Getenv(standENV)
-	if stand == productionStand {
-		config = productionConfigPath
-	}
-	path := fmt.Sprintf("%s/%s", configFolder, config)
+func GetConfig[T any](path string) (*T, error) {
 	cfgFile, err := LoadConfig(path)
 	if err != nil {
 		return nil, err
