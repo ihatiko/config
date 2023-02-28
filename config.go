@@ -1,7 +1,7 @@
 package config
 
 import (
-	cfg "github.com/ihatiko/viper-env"
+	"github.com/ihatiko/config/parser"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	lg "log"
@@ -21,8 +21,8 @@ func GetConfig[T any](path string) (*T, error) {
 	return cfg, nil
 }
 
-func LoadConfig(filename string) (*cfg.Config, error) {
-	cfg := cfg.New(viper.New())
+func LoadConfig(filename string) (*parser.Config, error) {
+	cfg := parser.New(viper.New())
 	cfg.SetConfigName(filename)
 	cfg.AddConfigPath(".")
 	cfg.AutomaticEnv()
@@ -36,7 +36,7 @@ func LoadConfig(filename string) (*cfg.Config, error) {
 	return cfg, nil
 }
 
-func ParseConfig[T any](v *cfg.Config) (*T, error) {
+func ParseConfig[T any](v *parser.Config) (*T, error) {
 	var c T
 	err := v.Unmarshal(&c)
 	if err != nil {

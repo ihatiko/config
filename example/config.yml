@@ -1,0 +1,11 @@
+case1:
+  array: ["123", "123"]
+
+case2:
+  ArrayStruct:
+    - name: name1
+      value: 123
+      value2: 123
+    - name: name2
+      value: 123
+      value2: 123
