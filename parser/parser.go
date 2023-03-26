@@ -1,8 +1,10 @@
 package parser
 
 import (
+	"fmt"
 	"github.com/spf13/viper"
 	"reflect"
+	"strconv"
 	"strings"
 )
 
@@ -17,7 +19,26 @@ func (e *Config) Unmarshal(rawVal interface{}, opts ...viper.DecoderConfigOption
 	}
 	_ = e.Viper.Unmarshal(rawVal, opts...)
 	e.readEnvs(rawVal)
-	return e.Viper.Unmarshal(rawVal, opts...)
+	e.RewriteEnv(rawVal)
+	return nil
+}
+
+func (e *Config) RewriteEnv(rawVal any) {
+	vl := reflect.ValueOf(rawVal).Elem()
+	for i := 0; i < vl.NumField(); i++ {
+		data := e.Get("test1.0")
+		field := vl.Field(i)
+		fmt.Println(data)
+		if field.Kind() == reflect.Slice {
+			for j := 0; j < field.Len(); j++ {
+				data := e.Get(fmt.Sprintf("%s"))
+				if data == nil {
+					continue
+				}
+				field.Index(j).Set(reflect.ValueOf("10"))
+			}
+		}
+	}
 }
 
 func (e *Config) readEnvs(rawVal interface{}) {
@@ -58,6 +79,18 @@ func (e *Config) bindEnvs(in interface{}, prev ...string) {
 				if key, ok := iter.Key().Interface().(string); ok {
 					e.bindEnvs(iter.Value().Interface(), append(prev, tv, key)...)
 				}
+			}
+		case reflect.Slice:
+			env := strings.Join(append(prev, tv), ".")
+			_ = e.Viper.BindEnv(env)
+			for i := 0; i < fv.Len(); i++ {
+				data := fv.Index(i)
+				if data.Kind() != reflect.Struct && data.Kind() != reflect.Map && data.Kind() != reflect.Slice {
+					env := strings.Join(append(prev, tv, strconv.Itoa(i)), ".")
+					_ = e.Viper.BindEnv(env)
+					continue
+				}
+				e.bindEnvs(data.Interface(), append(prev, tv, strconv.Itoa(i))...)
 			}
 		default:
 			env := strings.Join(append(prev, tv), ".")

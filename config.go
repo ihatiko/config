@@ -43,6 +43,5 @@ func ParseConfig[T any](v *parser.Config) (*T, error) {
 		lg.Printf("unable to decode into struct, %v", err)
 		return nil, err
 	}
-
 	return &c, nil
 }
