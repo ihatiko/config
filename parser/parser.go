@@ -17,27 +17,80 @@ func (e *Config) Unmarshal(rawVal interface{}, opts ...viper.DecoderConfigOption
 			return err
 		}
 	}
-	_ = e.Viper.Unmarshal(rawVal, opts...)
 	e.readEnvs(rawVal)
+	_ = e.Viper.Unmarshal(rawVal, opts...)
 	e.RewriteEnv(rawVal)
 	return nil
 }
 
 func (e *Config) RewriteEnv(rawVal any) {
 	vl := reflect.ValueOf(rawVal).Elem()
+	tp := reflect.TypeOf(rawVal).Elem()
+	e.rewriteEnv(vl, tp, "")
+}
+
+func (e *Config) rewriteEnv(vl reflect.Value, tp reflect.Type, prev string) {
 	for i := 0; i < vl.NumField(); i++ {
-		data := e.Get("test1.0")
+		fieldName := tp.Field(i).Name
 		field := vl.Field(i)
-		fmt.Println(data)
-		if field.Kind() == reflect.Slice {
-			for j := 0; j < field.Len(); j++ {
-				data := e.Get(fmt.Sprintf("%s"))
-				if data == nil {
-					continue
-				}
-				field.Index(j).Set(reflect.ValueOf("10"))
+		if field.Kind() == reflect.Ptr {
+			if field.IsZero() {
+				field = reflect.New(field.Type().Elem()).Elem()
+			} else {
+				field = field.Elem()
 			}
 		}
+		switch field.Kind() {
+		case reflect.Slice:
+			for j := 0; j < field.Len(); j++ {
+				key := fmt.Sprintf("%s.%s", fieldName, strconv.Itoa(j))
+				if prev != "" {
+					key = fmt.Sprintf("%s.%s", prev, key)
+				}
+				fieldData := e.Get(key)
+				if fieldData == nil {
+					continue
+				}
+				if _, ok := fieldData.(map[string]interface{}); ok {
+					e.rewriteEnv(field.Index(j), field.Index(j).Type(), key)
+					continue
+				}
+				field.Index(j).Set(reflect.ValueOf(fieldData))
+			}
+		default:
+			key := fieldName
+			if prev != "" {
+				key = fmt.Sprintf("%s.%s", prev, key)
+			}
+			fieldData := e.getCorrectEnv(field, key)
+			if fieldData == nil {
+				continue
+			}
+			if _, ok := fieldData.(map[string]interface{}); ok {
+				e.rewriteEnv(field, field.Type(), key)
+				continue
+			}
+			field.Set(reflect.ValueOf(fieldData))
+		}
+	}
+}
+
+func (e *Config) getCorrectEnv(valType reflect.Value, key string) any {
+	switch valType.Type().Kind() {
+	case reflect.Bool:
+		return e.GetBool(key)
+	case reflect.Int16:
+		return e.GetInt(key)
+	case reflect.Int:
+		return e.GetInt(key)
+	case reflect.Int32:
+		return e.GetInt32(key)
+	case reflect.Int64:
+		return e.GetInt64(key)
+	case reflect.String:
+		return e.GetString(key)
+	default:
+		return e.Get(key)
 	}
 }
 

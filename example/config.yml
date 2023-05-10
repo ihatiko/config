@@ -1,14 +1,11 @@
-case2:
-  ArrayStruct:
-    - name: name1
-      value: 123
-      value2: 123
-    - name: name2
-      value: 123
-      value2: 123
+case3:
+  - array: [ "1234", "1234" ]
+    name: 123
+  - array: [ "1234", "1234" ]
+    name: 123
 
 case1:
   array: ["1234", "1234"]
   name: 123
 
-test1: ["123", "123", "123"]
+testArray: ["123", "123", "123"]
