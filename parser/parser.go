@@ -19,7 +19,7 @@ func (e *Config) Unmarshal(rawVal interface{}, opts ...viper.DecoderConfigOption
 	}
 	e.readEnvs(rawVal)
 	_ = e.Viper.Unmarshal(rawVal, opts...)
-	e.RewriteEnv(rawVal)
+	//e.RewriteEnv(rawVal)
 	return nil
 }
 
