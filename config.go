@@ -7,8 +7,36 @@ import (
 	lg "log"
 )
 
-func GetConfig[T any](path string) (*T, error) {
-	cfgFile, err := LoadConfig(path)
+const (
+	configPath = "./config/config"
+)
+
+type Default struct {
+	Path string
+}
+
+type Option func(p *Default)
+
+func (d *Default) Validate() error {
+	if d.Path == "" {
+		return errors.New("empty project path")
+	}
+	return nil
+}
+
+func WithPath(path string) Option {
+	return func(p *Default) {
+		p.Path = path
+	}
+}
+
+func GetConfig[T any](opts ...Option) (*T, error) {
+	d := &Default{Path: configPath}
+	for _, opt := range opts {
+		opt(d)
+	}
+
+	cfgFile, err := LoadConfig(d.Path)
 	if err != nil {
 		return nil, err
 	}
