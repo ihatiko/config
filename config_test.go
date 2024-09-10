@@ -2,9 +2,11 @@ package config
 
 import (
 	"fmt"
-	"github.com/ihatiko/config/example"
 	"os"
+	"strings"
 	"testing"
+
+	"github.com/ihatiko/config/example"
 )
 
 func TestGetConfig(t *testing.T) {
@@ -12,6 +14,7 @@ func TestGetConfig(t *testing.T) {
 		in       func()
 		env      string
 		excepted func(config *example.Config)
+		err      error
 	}{
 		{
 			env: "CASE1_NAME",
@@ -27,7 +30,7 @@ func TestGetConfig(t *testing.T) {
 		{
 			env: "TEST1_0",
 			excepted: func(config *example.Config) {
-				if config.TestArray[0] != "321" && config.TestArray[1] != "321" && config.TestArray[2] != "321" {
+				if config.TestArray[0] != "123" && config.TestArray[1] != "123" && config.TestArray[2] != "123" {
 					panic(os.Setenv("TESTARRAY_0", "321"))
 				}
 			},
@@ -62,7 +65,7 @@ func TestGetConfig(t *testing.T) {
 		{
 			env: "os.Setenv(\"CASE3_0_NAME\", \"321\")",
 			excepted: func(config *example.Config) {
-				if config.Case3[0].Name != 321 {
+				if config.Case3[0].Name != 123 {
 					panic("os.Setenv(\"TESTARRAY\", \"1,2,3\")")
 				}
 			},
@@ -74,7 +77,7 @@ func TestGetConfig(t *testing.T) {
 
 	for _, caseTest := range cases {
 		caseTest.in()
-		cfg, err := GetConfig[example.Config]("./example/config")
+		cfg, err := GetConfig[example.Config](WithPath("./example/config"))
 		if err != nil {
 			panic(err)
 		}
@@ -82,5 +85,11 @@ func TestGetConfig(t *testing.T) {
 		os.Clearenv()
 		fmt.Println(cfg)
 	}
+}
 
+func TestWrongConfig(t *testing.T) {
+	_, err := GetConfig[example.Config](WithPath("./example/config_with_err"))
+	if err == nil || !strings.Contains(err.Error(), `unknown unit "d" in duration "1d"`) {
+		panic("error excepted, got nil")
+	}
 }
