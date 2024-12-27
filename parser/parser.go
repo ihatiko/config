@@ -2,10 +2,11 @@ package parser
 
 import (
 	"fmt"
-	"github.com/spf13/viper"
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/spf13/viper"
 )
 
 func (e *Config) Unmarshal(rawVal interface{}, opts ...viper.DecoderConfigOption) error {
@@ -18,7 +19,9 @@ func (e *Config) Unmarshal(rawVal interface{}, opts ...viper.DecoderConfigOption
 		}
 	}
 	e.readEnvs(rawVal)
-	_ = e.Viper.Unmarshal(rawVal, opts...)
+	if err := e.Viper.Unmarshal(rawVal, opts...); err != nil {
+		return err
+	}
 	//e.RewriteEnv(rawVal)
 	return nil
 }
